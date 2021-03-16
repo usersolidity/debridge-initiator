@@ -1,0 +1,19 @@
+{
+  "initiators": [
+    {
+      "type": "external",
+      "params": {
+        "name": "debridge"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "type": "ethtx",
+      "params": {
+        "address": "0xEeB87D562B7D026e1E91b4e7c350B12C2fd68926",
+        "functionSelector": "0xd9caa3d2"
+      }
+    }
+  ]
+}
