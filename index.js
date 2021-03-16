@@ -4,8 +4,8 @@ const bodyParser = require("body-parser");
 const request = require("request");
 const app = express();
 const Web3 = require("web3");
-const abiDecoder = require("abi-decoder");
-const registerAbi = require("../build/contracts/RegisterAbi.json").abi;
+// const abiDecoder = require("abi-decoder");
+const registerAbi = require("./abi/Register.json").abi;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -45,7 +45,7 @@ function processNewDeposit(deposit) {
   /* TODO: add block confirmation */
 
   /* notify oracle node*/
-  callChainlinkNode(deposit.raw.data);
+  callChainlinkNode(deposit.raw.data.commitment);
 }
 
 /* call the chainlink node and run a job */
@@ -59,7 +59,7 @@ function callChainlinkNode(data) {
         "X-Chainlink-EA-Secret": EI_IC_SECRET,
       },
       url: EI_CHAINLINKURL + url_addon,
-      body: `{"result" : "${data}"`,
+      body: `{"result" : "${data}"}`,
     },
     console.log
   );
