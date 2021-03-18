@@ -1,6 +1,7 @@
 [
   {
     "provider": "https://data-seed-prebsc-2-s3.binance.org:8545/",
-    "debridgeAddr": "0xC9F6C90C5846F982d95e0e9dF4DF6D6495B11962"
+    "debridgeAddr": "0x3F3E0A2d9e82C623E83ec8448D6345BF6E6d199B",
+    "network": "bsc"
   }
 ]

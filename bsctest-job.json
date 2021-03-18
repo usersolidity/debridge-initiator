@@ -1,18 +1,40 @@
-{
-  "initiators": [
-    {
-      "type": "external",
-      "params": {
-        "name": "white-debridge"
+[
+  {
+    "initiators": [
+      {
+        "type": "external",
+        "params": {
+          "name": "debridge"
+        }
       }
-    }
-  ],
-  "tasks": [
-    {
-      "type": "ethtx",
-      "params": {
-        "address": "0x908e1A01210142Bc4017f840663611f8E4a907Bb"
+    ],
+    "tasks": [
+      {
+        "type": "ethtx",
+        "params": {
+          "address": "0x5c3CE33d0246cb7e5c3a75De597f5Dc1D658b593",
+          "functionSelector": "0x0b29b943"
+        }
       }
-    }
-  ]
-}
+    ]
+  },
+  {
+    "initiators": [
+      {
+        "type": "external",
+        "params": {
+          "name": "debridge"
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "type": "ethtx",
+        "params": {
+          "address": "0x5c3CE33d0246cb7e5c3a75De597f5Dc1D658b593",
+          "functionSelector": "0xc4b56cd0"
+        }
+      }
+    ]
+  }
+]

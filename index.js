@@ -4,8 +4,8 @@ const bodyParser = require("body-parser");
 const request = require("request");
 const app = express();
 const Web3 = require("web3");
-// const abiDecoder = require("abi-decoder");
 const whiteDebridgeAbi = require("./assets/WhiteDebridge.json").abi;
+const latestBlocks = {};
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -16,6 +16,7 @@ const EI_CHAINLINKURL = process.env.EI_CHAINLINKURL;
 const MINT_JOB_ID = process.env.MINT_JOB_ID;
 const BURNT_JOB_ID = process.env.BURNT_JOB_ID;
 const CHAIN_ID = process.env.CHAIN_ID;
+const INTERVAL = process.env.INTERVAL;
 const chainConfigs = require("./assets/ChainConfig.json");
 
 app.get("/", function (req, res) {
@@ -30,26 +31,40 @@ async function subscribe() {
       whiteDebridgeAbi,
       chainConfig.debridgeAddr
     );
-
-    registerInstance.getPastEvents(
-      "Sent",
-      { fromBlock: 7173606, toBlock: "latest" },
-      processNewTransfer
-    );
-    registerInstance.getPastEvents(
-      "Burnt",
-      { fromBlock: 23965348 },
-      processNewTransfer
-    );
+    setInterval(() => {
+      checkNewEvents(web3, registerInstance, chainConfig.network);
+    }, INTERVAL);
   }
 }
 
-/* proccess new deposit event */
-function processNewTransfer(err, events) {
+/* collect new events */
+async function checkNewEvents(web3, registerInstance, network) {
+  /* get blocks range */
+  const toBlock = (await web3.eth.getBlockNumber()) - 3;
+  const fromBlock = latestBlocks[network]
+    ? latestBlocks[network]
+    : toBlock - 100;
+
+  /* get events */
+  registerInstance.getPastEvents(
+    "Sent",
+    { fromBlock, toBlock },
+    processNewTransfers
+  );
+  registerInstance.getPastEvents(
+    "Burnt",
+    { fromBlock, toBlock },
+    processNewTransfers
+  );
+
+  /* update lattest viewed block */
+  latestBlocks[network] = toBlock;
+}
+
+/* proccess new events */
+function processNewTransfers(err, events) {
   console.log(events);
   for (let e of events) {
-    /* TODO: add block confirmation */
-
     /* remove chainIdTo function selector */
     const chainIdTo = e.returnValues.chainIdTo;
     if (chainIdTo != CHAIN_ID) continue;
