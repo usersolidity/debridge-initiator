@@ -3,7 +3,7 @@
     {
       "type": "external",
       "params": {
-        "name": "debridge"
+        "name": "white-debridge"
       }
     }
   ],
@@ -11,8 +11,7 @@
     {
       "type": "ethtx",
       "params": {
-        "address": "0xEeB87D562B7D026e1E91b4e7c350B12C2fd68926",
-        "functionSelector": "0xd9caa3d2"
+        "address": "0x908e1A01210142Bc4017f840663611f8E4a907Bb"
       }
     }
   ]

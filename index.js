@@ -5,7 +5,7 @@ const request = require("request");
 const app = express();
 const Web3 = require("web3");
 // const abiDecoder = require("abi-decoder");
-const registerAbi = require("./abi/Register.json").abi;
+const whiteDebridgeAbi = require("./assets/WhiteDebridge.json").abi;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -14,7 +14,8 @@ const EI_IC_ACCESSKEY = process.env.EI_IC_ACCESSKEY;
 const EI_IC_SECRET = process.env.EI_IC_SECRET;
 const EI_CHAINLINKURL = process.env.EI_CHAINLINKURL;
 const JOB_ID = process.env.JOB_ID;
-const CHAIN_CONFIGS = JSON.parse(process.env.CHAIN_CONFIGS);
+const CHAIN_ID = process.env.CHAIN_ID;
+const chainConfigs = require("./assets/ChainConfig.json");
 
 /* health check endpoint */
 app.get("/", function (req, res) {
@@ -22,30 +23,48 @@ app.get("/", function (req, res) {
 });
 
 /* call the chainlink node and run a job */
-function subscribe() {
-  for (let chainConfig of CHAIN_CONFIGS) {
+async function subscribe() {
+  for (let chainConfig of chainConfigs) {
     const web3 = new Web3(chainConfig.provider);
     const registerInstance = new web3.eth.Contract(
-      registerAbi,
-      chainConfig.registerAddr
+      whiteDebridgeAbi,
+      chainConfig.debridgeAddr
     );
-    registerInstance.events
-      .Deposit(function (error, event) {
-        console.log(event);
-      })
-      .on("data", processNewDeposit)
-      .on("changed", function (event) {
-        /* TODO: add cancel for reverted trx */
-      });
+
+    registerInstance.getPastEvents(
+      "Sent",
+      { fromBlock: 7173606, toBlock: "latest" },
+      processNewTransfer
+    );
+    registerInstance.getPastEvents(
+      "Burnt",
+      { fromBlock: 23965348 },
+      processNewTransfer
+    );
   }
 }
 
 /* proccess new deposit event */
-function processNewDeposit(deposit) {
-  /* TODO: add block confirmation */
+function processNewTransfer(err, events) {
+  console.log(events);
+  for (let e of events) {
+    /* TODO: add block confirmation */
 
-  /* notify oracle node*/
-  callChainlinkNode(deposit.raw.data.commitment);
+    /* remove chainIdTo function selector */
+    const chainIdTo = e.returnValues.chainIdTo;
+    if (chainIdTo != CHAIN_ID) continue;
+
+    /* add function selector */
+    const functionId = e.event === "Sent" ? "0x435f7bcd" : "0x2288c5cf";
+
+    const data = "" + e.raw.data.slice(2, e.raw.data.length - 64);
+
+    console.log(e.raw.data);
+    console.log(data);
+
+    /* notify oracle node*/
+    callChainlinkNode(data);
+  }
 }
 
 /* call the chainlink node and run a job */
