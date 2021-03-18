@@ -13,11 +13,11 @@ app.use(bodyParser.json());
 const EI_IC_ACCESSKEY = process.env.EI_IC_ACCESSKEY;
 const EI_IC_SECRET = process.env.EI_IC_SECRET;
 const EI_CHAINLINKURL = process.env.EI_CHAINLINKURL;
-const JOB_ID = process.env.JOB_ID;
+const MINT_JOB_ID = process.env.MINT_JOB_ID;
+const BURNT_JOB_ID = process.env.BURNT_JOB_ID;
 const CHAIN_ID = process.env.CHAIN_ID;
 const chainConfigs = require("./assets/ChainConfig.json");
 
-/* health check endpoint */
 app.get("/", function (req, res) {
   res.sendStatus(200);
 });
@@ -55,21 +55,18 @@ function processNewTransfer(err, events) {
     if (chainIdTo != CHAIN_ID) continue;
 
     /* add function selector */
-    const functionId = e.event === "Sent" ? "0x435f7bcd" : "0x2288c5cf";
-
-    const data = "" + e.raw.data.slice(2, e.raw.data.length - 64);
-
-    console.log(e.raw.data);
-    console.log(data);
+    const jobId = e.event === "Sent" ? MINT_JOB_ID : BURNT_JOB_ID;
+    const data =
+      e.event === "Sent" ? e.returnValues.sentId : e.returnValues.burntId;
 
     /* notify oracle node*/
-    callChainlinkNode(data);
+    callChainlinkNode(jobId, data);
   }
 }
 
 /* call the chainlink node and run a job */
-function callChainlinkNode(data) {
-  const url_addon = "/v2/specs/" + JOB_ID + "/runs";
+function callChainlinkNode(jobId, data) {
+  const url_addon = "/v2/specs/" + jobId + "/runs";
   request.post(
     {
       headers: {
