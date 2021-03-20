@@ -1,7 +1,42 @@
 [
   {
-    "provider": "https://data-seed-prebsc-2-s3.binance.org:8545/",
-    "debridgeAddr": "0x3F3E0A2d9e82C623E83ec8448D6345BF6E6d199B",
-    "network": "bsc"
+    "eiDatabaseurl": "postgresql://postgres:postgres@127.0.0.1:5432/debridge?sslmode=disable",
+    "eiChainlinkurl": "http://localhost:6688",
+    "eiIcAccesskey": "d641977fdc744213a9b2bbbd1a604809",
+    "eiIcSecret": "2AZ4XrriMBCKxxkJKflMZ16XXJax0hfzUnOuiXQmWDsa8sEPzoV2SZAN576cncWN",
+    "eiCiAccesskey": "UdX7ZWKJUo3kpYJfg4F80XHp3OKb2Kyuk6Di43kg9yBNtOHb9OkNgX0az1lerPG1",
+    "eiCiSecret": "heJzZ8ThOrXwxdFu5jUKhG++LJxN11iMu8cy0qCMVCimA2ouWr3fbjkZ8xdnykMR",
+    "chainId": 42,
+    "mintJobId": "984dc6dbac8f4a46893a7f07a8291f85",
+    "burntJobId": "6b309c4c30a048c0beb0444f2b1c2b0f",
+    "interval": 30000,
+    "network": "kovan",
+    "supportedChains": [
+      {
+        "network": "bsc",
+        "provider": "ws://46.4.15.216:8546/",
+        "debridgeAddr": "0xFAE07FAB51c38aC037b648c304D4dF30681B7399"
+      }
+    ]
+  },
+  {
+    "eiDatabaseurl": "postgresql://postgres:postgres@127.0.0.1:5432/bsctest?sslmode=disable",
+    "eiChainlinkurl": "http://localhost:6689",
+    "eiIcAccesskey": "96dead92a17644f1babf3718b756160a",
+    "eiIcSecret": "w7AOF0Od1d+RRxdUKrEGrt4u+5r/XzHmmjpZqcYhV9yuja45oYKkgFxbEGOhDMW6",
+    "eiCiAccesskey": "EuZs+AzLp6YCNAffImSWMgrtCN6FHv8X66BwlEG2YAGjzRtGCQySSCGL8K0UFb7Y",
+    "eiCiSecret": "wEkulAD2euC3YubcJQtkviNuxXPL+/4v96F+XA4pXg6cwyir7dwTEunM1MabXfi7",
+    "chainId": 56,
+    "mintJobId": "ac0914aa099d41e5a4fb4136fae0512f",
+    "burntJobId": "c66abd85640e4947a053aaf1f3b0e0de",
+    "interval": 30000,
+    "network": "bsc",
+    "supportedChains": [
+      {
+        "network": "kovan",
+        "provider": "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        "debridgeAddr": "0x337B7e571c4CE0fA587b0d131CB9a1bB45c5ef41"
+      }
+    ]
   }
 ]

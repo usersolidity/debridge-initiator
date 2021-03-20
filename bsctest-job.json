@@ -12,7 +12,7 @@
       {
         "type": "ethtx",
         "params": {
-          "address": "0x5c3CE33d0246cb7e5c3a75De597f5Dc1D658b593",
+          "address": "0x503559a63AAb7898A8e23eD7E2af2Fa0Fc78E30A",
           "functionSelector": "0x0b29b943"
         }
       }
@@ -31,7 +31,7 @@
       {
         "type": "ethtx",
         "params": {
-          "address": "0x5c3CE33d0246cb7e5c3a75De597f5Dc1D658b593",
+          "address": "0x503559a63AAb7898A8e23eD7E2af2Fa0Fc78E30A",
           "functionSelector": "0xc4b56cd0"
         }
       }
