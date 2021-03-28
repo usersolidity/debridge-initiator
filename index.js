@@ -39,11 +39,9 @@ async function checkNewEvents(chainConfig, supportedChain) {
 
   /* get blocks range */
   const toBlock = (await web3.eth.getBlockNumber()) - 3;
-  const fromBlock = latestBlocks[supportedChain.network]
-    ? latestBlocks[supportedChain.network]
+  const fromBlock = supportedChain.latestBlock
+    ? supportedChain.latestBlock
     : toBlock - 100;
-  console.log(fromBlock);
-  console.log(toBlock);
   if (fromBlock >= toBlock) return;
 
   /* get events */
@@ -63,7 +61,7 @@ async function checkNewEvents(chainConfig, supportedChain) {
   );
 
   /* update lattest viewed block */
-  latestBlocks[supportedChain.network] = toBlock;
+  supportedChain.latestBlock = toBlock;
 }
 
 /* proccess new events */

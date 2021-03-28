@@ -1,18 +1,18 @@
 [
   {
-    "eiDatabaseurl": "postgresql://postgres:postgres@127.0.0.1:5432/debridge?sslmode=disable",
     "eiChainlinkurl": "http://localhost:6688",
-    "eiIcAccesskey": "d641977fdc744213a9b2bbbd1a604809",
-    "eiIcSecret": "2AZ4XrriMBCKxxkJKflMZ16XXJax0hfzUnOuiXQmWDsa8sEPzoV2SZAN576cncWN",
-    "eiCiAccesskey": "UdX7ZWKJUo3kpYJfg4F80XHp3OKb2Kyuk6Di43kg9yBNtOHb9OkNgX0az1lerPG1",
-    "eiCiSecret": "heJzZ8ThOrXwxdFu5jUKhG++LJxN11iMu8cy0qCMVCimA2ouWr3fbjkZ8xdnykMR",
+    "eiIcAccesskey": "a54f872d0f8745b5bb37596ee5ca065a",
+    "eiIcSecret": "in2SUAhqiUbcI7SMRuKB1WnDm/VCRWxYIl5MezNf3fB+tnkciu9/4IGuHIMOpfdC",
+    "eiCiAccesskey": "dxdsAL9B4yzNsVh1u6xeyTOnqDWfE3q6jCIPx9Z69BlC7QU8A03A1HnpKHL5Rhq2",
+    "eiCiSecret": "4l5HIxQQ4+9Ryp9WyfkuH0yo4jZ27CBAvwIaxUsq9VMP0wV1hQmPMC6B80D0M5uZ",
     "chainId": 42,
-    "mintJobId": "984dc6dbac8f4a46893a7f07a8291f85",
-    "burntJobId": "6b309c4c30a048c0beb0444f2b1c2b0f",
+    "mintJobId": "19153723cbfa44e991e8b799c2c96e13",
+    "burntJobId": "992f49a95e7644feb53fd77cbb9bfbf9",
     "interval": 30000,
-    "network": "kovan",
+    "network": "eth",
     "supportedChains": [
       {
+        "latestBlock": 0,
         "network": "bsc",
         "provider": "ws://46.4.15.216:8546/",
         "debridgeAddr": "0xFAE07FAB51c38aC037b648c304D4dF30681B7399"
@@ -20,22 +20,22 @@
     ]
   },
   {
-    "eiDatabaseurl": "postgresql://postgres:postgres@127.0.0.1:5432/bsctest?sslmode=disable",
     "eiChainlinkurl": "http://localhost:6689",
-    "eiIcAccesskey": "96dead92a17644f1babf3718b756160a",
-    "eiIcSecret": "w7AOF0Od1d+RRxdUKrEGrt4u+5r/XzHmmjpZqcYhV9yuja45oYKkgFxbEGOhDMW6",
-    "eiCiAccesskey": "EuZs+AzLp6YCNAffImSWMgrtCN6FHv8X66BwlEG2YAGjzRtGCQySSCGL8K0UFb7Y",
-    "eiCiSecret": "wEkulAD2euC3YubcJQtkviNuxXPL+/4v96F+XA4pXg6cwyir7dwTEunM1MabXfi7",
+    "eiIcAccesskey": "839645c1973d49029eec091590efd3de",
+    "eiIcSecret": "cvH6KikuFWvh2Yh2JxWybWYq7r9a9Sgz2TjcB6pDSd/k71aQ9i32GndQYObjbuKP",
+    "eiCiAccesskey": "yS26tEH4kykymlLRytSU/95FvP2DocKvUlcjxdz+kfGpgTZRLV8Rh6Rl74VsmlZ6",
+    "eiCiSecret": "e1J4j7zdhZfvxY2xjVWzT+hgD257FThbDjoi1rrpMWVlg3clr1qKfDXcMw/cpwbn",
     "chainId": 56,
-    "mintJobId": "ac0914aa099d41e5a4fb4136fae0512f",
-    "burntJobId": "c66abd85640e4947a053aaf1f3b0e0de",
+    "mintJobId": "4de92a47796e4ede853ca6268b9b55ff",
+    "burntJobId": "b1e770e7d5824a15819ee4acedc3a1f3",
     "interval": 30000,
     "network": "bsc",
     "supportedChains": [
       {
-        "network": "kovan",
+        "latestBlock": 0,
+        "network": "eth",
         "provider": "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        "debridgeAddr": "0x337B7e571c4CE0fA587b0d131CB9a1bB45c5ef41"
+        "debridgeAddr": "0x9d088A627bb3110e4Cf66690F31A02a48B809387"
       }
     ]
   }
