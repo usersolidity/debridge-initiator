@@ -9,6 +9,8 @@ const whiteDebridgeAbi = require("./assets/WhiteDebridge.json").abi;
 
 const chainConfigDatabase = process.env.CHAIN_CONFIG_DATABASE;
 const supportedChainsDatabase = process.env.SUPPORTED_CHAINS_DATABASE;
+const submissionsDatabase = process.env.SUBMISSIONS_DATABASE;
+const minConfirmations = process.env.MIN_CONFIRMATIONS;
 
 const pool = new Pool();
 let pgClient;
@@ -28,64 +30,72 @@ app.post("/jobs", function (req, res) {
 
 /* call the chainlink node and run a job */
 async function subscribe() {
-  for (let chainConfig of chainConfigs)
-    for (let supportedChain of chainConfig.supportedChains)
-      setInterval(() => {
-        checkNewEvents(chainConfig, supportedChain);
-      }, chainConfig.interval);
+  const supportedChains = await getSupportedChains();
+  console.log(supportedChains);
+  for (let supportedChain of supportedChains) {
+    const web3 = new Web3(supportedChain.provider);
+    const registerInstance = new web3.eth.Contract(
+      whiteDebridgeAbi,
+      supportedChain.debridgeaddr
+    );
+
+    setInterval(() => {
+      checkNewEvents(supportedChain, web3, registerInstance);
+    }, supportedChain.interval);
+  }
 }
 
 /* collect new events */
-async function checkNewEvents(chainConfig, supportedChain) {
-  const web3 = new Web3(supportedChain.provider);
-  const registerInstance = new web3.eth.Contract(
-    whiteDebridgeAbi,
-    supportedChain.debridgeAddr
-  );
-
+async function checkNewEvents(supportedChain, web3, registerInstance) {
   /* get blocks range */
-  const toBlock = (await web3.eth.getBlockNumber()) - 3;
-  const fromBlock = supportedChain.latestBlock
-    ? supportedChain.latestBlock
-    : toBlock - 100;
+  const toBlock = (await web3.eth.getBlockNumber()) - minConfirmations;
+  const fromBlock = supportedChain.latestblock;
   if (fromBlock >= toBlock) return;
 
   /* get events */
   registerInstance.getPastEvents(
     "Sent",
     { fromBlock, toBlock },
-    (error, events) => {
-      processNewTransfers(events, chainConfig);
+    async (error, events) => {
+      await processNewTransfers(events);
     }
   );
   registerInstance.getPastEvents(
     "Burnt",
     { fromBlock, toBlock },
-    (error, events) => {
-      processNewTransfers(events, chainConfig);
+    async (error, events) => {
+      await processNewTransfers(events);
     }
   );
 
-  /* update lattest viewed block */
-  supportedChain.latestBlock = toBlock;
+  // /* update lattest viewed block */
+  supportedChain.latestblock = toBlock;
+  await updateSupportedChainBlock(supportedChain.chainid, toBlock);
 }
 
 /* proccess new events */
-function processNewTransfers(events, chainConfig) {
+async function processNewTransfers(events, chainConfig) {
   console.log(events);
   for (let e of events) {
     /* remove chainIdTo function selector */
     const chainIdTo = e.returnValues.chainIdTo;
-    if (chainIdTo != chainConfig.chainId) continue;
+    const chainConfig = await getChainConfig(chainIdTo);
+    if (!chainConfig) continue;
 
-    /* add function selector */
-    const jobId =
-      e.event === "Sent" ? chainConfig.mintJobId : chainConfig.burntJobId;
-    const data =
-      e.event === "Sent" ? e.returnValues.sentId : e.returnValues.burntId;
-
-    /* notify oracle node*/
-    callChainlinkNode(jobId, chainConfig, data);
+    /* call chainlink node */
+    if (e.event === "Sent") {
+      callChainlinkNode(
+        chainConfig.mintjobid,
+        chainConfig,
+        e.returnValues.sentId
+      );
+    } else {
+      callChainlinkNode(
+        chainConfig.burntjobid,
+        chainConfig,
+        e.returnValues.burntId
+      );
+    }
   }
 }
 
@@ -96,10 +106,10 @@ function callChainlinkNode(jobId, chainConfig, data) {
     {
       headers: {
         "content-type": "application/json",
-        "X-Chainlink-EA-AccessKey": chainConfig.eiIcAccesskey,
-        "X-Chainlink-EA-Secret": chainConfig.eiIcSecret,
+        "X-Chainlink-EA-AccessKey": chainConfig.eiicaccesskey,
+        "X-Chainlink-EA-Secret": chainConfig.eiicsecret,
       },
-      url: chainConfig.eiChainlinkurl + url_addon,
+      url: chainConfig.eichainlinkurl + url_addon,
       body: `{"result" : "${data}"}`,
     },
     console.log
@@ -112,55 +122,210 @@ async function connectDb() {
 
 /* */
 async function createTables() {
-  // {
-  //   "eiChainlinkurl": "http://localhost:6688",
-  //   "eiIcAccesskey": "a54f872d0f8745b5bb37596ee5ca065a",
-  //   "eiIcSecret": "in2SUAhqiUbcI7SMRuKB1WnDm/VCRWxYIl5MezNf3fB+tnkciu9/4IGuHIMOpfdC",
-  //   "eiCiAccesskey": "dxdsAL9B4yzNsVh1u6xeyTOnqDWfE3q6jCIPx9Z69BlC7QU8A03A1HnpKHL5Rhq2",
-  //   "eiCiSecret": "4l5HIxQQ4+9Ryp9WyfkuH0yo4jZ27CBAvwIaxUsq9VMP0wV1hQmPMC6B80D0M5uZ",
-  //   "chainId": 42,
-  //   "mintJobId": "19153723cbfa44e991e8b799c2c96e13",
-  //   "burntJobId": "992f49a95e7644feb53fd77cbb9bfbf9",
-  //   "interval": 30000,
-  //   "network": "eth",
-  //   "supportedChains": [
-  //     {
-  //       "latestBlock": 0,
-  //       "network": "bsc",
-  //       "provider": "ws://46.4.15.216:8546/",
-  //       "debridgeAddr": "0xFAE07FAB51c38aC037b648c304D4dF30681B7399"
-  //     }
-  //   ]
-  // }
-  await client.query(`CREATE TABLE ${chainConfigDatabase} IF NOT EXISTS (
-    chainId                 integer CONSTRAINT firstkey PRIMARY KEY,
-    eiChainlinkurl          varchar(100) NOT NULL,
-    eiIcAccesskey           char(32) NOT NULL,
-    eiIcSecret              char(64) NOT NULL,
-    eiCiAccesskey           char(64) NOT NULL,
-    eiCiSecret              char(64) NOT NULL,
-    mintJobId               char(32) NOT NULL,
-    burntJobId              char(32) NOT NULL,
-    interval                integer NOT NULL,
+  // await pgClient.query(`drop table if exists ${submissionsDatabase} ;`);
+  // await pgClient.query(`drop table if exists ${supportedChainsDatabase} ;`);
+  // await pgClient.query(`drop table if exists ${chainConfigDatabase} ;`);
+  await pgClient.query(`create table if not exists ${supportedChainsDatabase} (
+    chainId                 integer primary key,
     network                 varchar(10),
+    debridgeAddr            char(42),
+    latestBlock             integer,
+    provider                varchar(200),
+    interval                integer
   );`);
-  await client.query(`CREATE TABLE ${supportedChainsDatabase} IF NOT EXISTS (
-    chainId                 integer CONSTRAINT firstkey PRIMARY KEY,
-    network                 varchar(10) NOT NULL,
-    debridgeAddr            char(42) NOT NULL,
-    latestBlock             integer NOT NULL,
-    provider                varchar(200) NOT NULL,
-  );`);
-  // const text = `INSERT INTO ${chainConfigDatabase}(name, email) VALUES($1, $2) RETURNING *`;
-}
-async function createChainConfig(submissionId, submissionType, txHash) {}
-async function getChainConfigs() {}
-async function updateChainConfigs() {}
 
-/* */
-async function createSubmission(submissionId, submissionType, txHash) {}
-async function getSubmission(submissionId) {}
-async function updateSubmission(submissionId, txHash) {}
+  await pgClient.query(`create table if not exists ${chainConfigDatabase} (
+    chainId                 integer primary key,
+    eiChainlinkurl          varchar(100),
+    eiIcAccesskey           char(32),
+    eiIcSecret              char(64),
+    eiCiAccesskey           char(64),
+    eiCiSecret              char(64),
+    mintJobId               char(32),
+    burntJobId              char(32),
+    network                 varchar(10)
+  );`);
+
+  await pgClient.query(`create table if not exists ${submissionsDatabase} (
+    submissioId             integer primary key,
+    txHash                  char(64),
+    chainFrom               integer,
+    chainTo                 integer,
+    debridgeId              char(64),
+    receiverAddr            char(42),
+    amount                  integer,
+    status                  integer,
+    constraint chainFrom
+      foreign key(chainFrom)
+        references ${supportedChainsDatabase}(chainId),
+    constraint chainTo
+      foreign key(chainTo)
+        references ${chainConfigDatabase}(chainId)
+  );`);
+
+  await createSupportedChain(
+    56,
+    0,
+    "bsc",
+    "ws://46.4.15.216:8546/",
+    "0xFAE07FAB51c38aC037b648c304D4dF30681B7399",
+    60000
+  );
+  await createSupportedChain(
+    42,
+    0,
+    "eth",
+    "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+    "0x9d088A627bb3110e4Cf66690F31A02a48B809387",
+    60000
+  );
+  await createChainConfig(
+    42,
+    "http://localhost:6688",
+    "a54f872d0f8745b5bb37596ee5ca065a",
+    "in2SUAhqiUbcI7SMRuKB1WnDm/VCRWxYIl5MezNf3fB+tnkciu9/4IGuHIMOpfdC",
+    "dxdsAL9B4yzNsVh1u6xeyTOnqDWfE3q6jCIPx9Z69BlC7QU8A03A1HnpKHL5Rhq2",
+    "4l5HIxQQ4+9Ryp9WyfkuH0yo4jZ27CBAvwIaxUsq9VMP0wV1hQmPMC6B80D0M5uZ",
+    "19153723cbfa44e991e8b799c2c96e13",
+    "992f49a95e7644feb53fd77cbb9bfbf9",
+    "eth"
+  );
+  await createChainConfig(
+    56,
+    "http://localhost:6689",
+    "839645c1973d49029eec091590efd3de",
+    "cvH6KikuFWvh2Yh2JxWybWYq7r9a9Sgz2TjcB6pDSd/k71aQ9i32GndQYObjbuKP",
+    "yS26tEH4kykymlLRytSU/95FvP2DocKvUlcjxdz+kfGpgTZRLV8Rh6Rl74VsmlZ6",
+    "e1J4j7zdhZfvxY2xjVWzT+hgD257FThbDjoi1rrpMWVlg3clr1qKfDXcMw/cpwbn",
+    "4de92a47796e4ede853ca6268b9b55ff",
+    "b1e770e7d5824a15819ee4acedc3a1f3",
+    "bsc"
+  );
+}
+
+async function createChainConfig(
+  chainId,
+  eiChainlinkurl,
+  eiIcAccesskey,
+  eiIcSecret,
+  eiCiAccesskey,
+  eiCiSecret,
+  mintJobId,
+  burntJobId,
+  network
+) {
+  await pgClient.query(`insert into ${chainConfigDatabase} (
+    chainId,
+    eiChainlinkurl,
+    eiIcAccesskey,
+    eiIcSecret,
+    eiCiAccesskey,
+    eiCiSecret,
+    mintJobId,
+    burntJobId,
+    network
+  ) values(
+    ${chainId},
+    '${eiChainlinkurl}',
+    '${eiIcAccesskey}',
+    '${eiIcSecret}',
+    '${eiCiAccesskey}',
+    '${eiCiSecret}',
+    '${mintJobId}',
+    '${burntJobId}',
+    '${network}'
+  ) on conflict do nothing;`);
+}
+async function createSupportedChain(
+  chainId,
+  latestBlock,
+  network,
+  provider,
+  debridgeAddr,
+  interval
+) {
+  await pgClient.query(`insert into ${supportedChainsDatabase} (
+    chainId,
+    latestBlock,
+    network,
+    provider,
+    debridgeAddr,
+    interval
+  ) values(
+    ${chainId},
+    ${latestBlock},
+    '${network}',
+    '${provider}',
+    '${debridgeAddr}',
+    '${interval}'
+  ) on conflict do nothing;`);
+}
+async function createSubmission(
+  submissioId,
+  txHash,
+  chainFrom,
+  chainTo,
+  debridgeId,
+  receiverAddr,
+  amount,
+  status,
+  chainFrom,
+  chainTo
+) {
+  await pgClient.query(`insert into ${submissionsDatabase} (
+    submissioId,
+    txHash,
+    chainFrom,
+    chainTo,
+    debridgeId,
+    receiverAddr,
+    amount,
+    status,
+    chainFrom,
+    chainTo
+  ) values(
+    '${submissioId}',
+    '${txHash}',
+    ${chainFrom},
+    ${chainTo},
+    '${debridgeId}',
+    '${receiverAddr}',
+    ${amount},
+    ${status},
+    ${chainFrom},
+    ${chainTo}
+  ) on conflict do nothing;`);
+}
+async function getChainConfigs() {
+  const result = await pgClient.query(`select * from ${chainConfigDatabase};`);
+  return result.rows;
+}
+async function getChainConfig(chainId) {
+  const result = await pgClient.query(
+    `select * from ${chainConfigDatabase} where chainId=${chainId};`
+  );
+  return result.rows.length > 0 ? result.rows[0] : null;
+}
+async function getSupportedChains() {
+  const result = await pgClient.query(
+    `select * from ${supportedChainsDatabase};`
+  );
+  return result.rows;
+}
+async function getSubmission(submissionId) {
+  const result = await pgClient.query(`select * from ${submissionsDatabase};`);
+  return result.rows;
+}
+async function updateSupportedChainBlock(chainId, latestBlock) {
+  await pgClient.query(`update ${supportedChainsDatabase} set 
+  latestBlock = ${latestBlock}
+  where chainId = ${chainId};`);
+}
+async function updateSubmissionStatus(submissionId, status) {
+  await pgClient.query(`update ${submissionsDatabase} set 
+  status = ${status}
+  where submissionId = ${submissionId};`);
+}
 
 /* TODO: add logger */
 const server = app.listen(process.env.PORT || 8080, async function () {
@@ -168,5 +333,5 @@ const server = app.listen(process.env.PORT || 8080, async function () {
   console.log("App now running on port", port);
   await connectDb();
   await createTables();
-  // await subscribe();
+  await subscribe();
 });
