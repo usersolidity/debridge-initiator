@@ -43,9 +43,6 @@ class Subscriber {
       }, 10000);
     }
     setInterval(() => {
-      this.updateTrxStatus();
-    }, 120000);
-    setInterval(() => {
       this.setAllChainlinkCookies();
     }, 86400);
   }
@@ -161,20 +158,6 @@ class Subscriber {
       e.amount,
       SubmisionStatus.CREATED
     );
-  }
-
-  async updateTrxStatus() {
-    const unconfirmedSubmissions = await this.db.getSubmissionsByStatus(
-      SubmisionStatus.BROADCASTED
-    );
-    for (let submission of unconfirmedSubmissions) {
-      const trx = await web3.eth.getTransactionReceipt(submission.txHash);
-      if (trx)
-        await this.db.updateSubmissionStatus(
-          submission.submissionId,
-          trx.status ? SubmisionStatus.CONFIRMED : SubmisionStatus.REVERTED
-        );
-    }
   }
 
   /* set chainlink cookies */

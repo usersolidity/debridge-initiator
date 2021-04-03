@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const chainConfigDatabase = process.env.CHAIN_CONFIG_DATABASE;
+const chainConfigDatabase = process.env.CHAINLINK_CONFIG_DATABASE;
 const supportedChainsDatabase = process.env.SUPPORTED_CHAINS_DATABASE;
 const submissionsDatabase = process.env.SUBMISSIONS_DATABASE;
 
