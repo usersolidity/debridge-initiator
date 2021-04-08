@@ -84,9 +84,8 @@ class Subscriber {
       if (!chainConfig) continue;
 
       /* call chainlink node */
-      let submissionId;
+      const submissionId = e.returnValues.submissionId;
       if (e.event == "Sent") {
-        submissionId = e.returnValues.sentId;
         const submission = await this.db.getSubmission(submissionId);
         if (submission) continue;
         this.callChainlinkNode(
@@ -97,7 +96,6 @@ class Subscriber {
           chainIdFrom
         );
       } else {
-        submissionId = e.returnValues.burntId;
         const submission = await this.db.getSubmission(submissionId);
         if (submission) continue;
         this.callChainlinkNode(
